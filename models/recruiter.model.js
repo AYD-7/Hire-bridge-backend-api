@@ -18,7 +18,7 @@ const recruiterSchema = new mongoose.Schema({
 
     // Phone Number field
     phone: {
-        type: Number,
+        type: String,
         required: true,
         trim: true,
     },
@@ -43,7 +43,6 @@ const recruiterSchema = new mongoose.Schema({
     description: {
         type: String,
         trim: true,
-        minlength: [150, "Description cannot be less than 150 characters!"],      
     },
 
     // Address
@@ -84,18 +83,18 @@ const recruiterSchema = new mongoose.Schema({
 },
 {timestamps: true,});
 
-// Hash password before saving
-recruiterSchema.pre("save", async function () {
-  if (!this.isModified("password")) return;
+// // Hash password before saving
+// recruiterSchema.pre("save", async function () {
+//   if (!this.isModified("password")) return;
 
-  const salt = await bcryptjs.genSalt(10);
-  this.password = await bcryptjs.hash(this.password, salt);
-});
+//   const salt = await bcryptjs.genSalt(10);
+//   this.password = await bcryptjs.hash(this.password, salt);
+// });
 
-// Compare password method
-recruiterSchema.methods.comparePassword = async function (enteredPassword) {
-  return await bcryptjs.compare(enteredPassword, this.password);
-};
+// // Compare password method
+// recruiterSchema.methods.comparePassword = async function (enteredPassword) {
+//   return await bcryptjs.compare(enteredPassword, this.password);
+// };
 
 // Creating Recruiter model
 const Recruiter = mongoose.model("Recruiter", recruiterSchema);

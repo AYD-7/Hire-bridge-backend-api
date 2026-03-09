@@ -12,10 +12,11 @@ export const registerRecruiter = async (req, res, next) => {
             email,
             location,
             address,
+            ...otherFields
         } = req.body;
 
         // Validating required fields
-        if (!business || !industry || !phone || !email || !location || address) {
+        if (!business || !industry || !phone || !email || !location || !address) {
             return res.status(400).json({
                 success: false,
                 message: "You are missing a required field!"
@@ -40,6 +41,7 @@ export const registerRecruiter = async (req, res, next) => {
             email,
             location,
             address,
+            ...otherFields,
             lastLogin: new Date().toISOString(), 
         });
 
