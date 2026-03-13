@@ -8,7 +8,7 @@ export const createJob = async (req, res, next) => {
         const recruiterId = req.user.id;
 
         // Destructuring to get core and needed fields
-        const { title, description, skills, experienceLevel, location } = req.body;
+        const { title, description, requiredSkills, experienceLevel, location } = req.body;
 
         // Data validation
         if (!title || !description || !experienceLevel || !location) {
@@ -22,9 +22,10 @@ export const createJob = async (req, res, next) => {
         const job = await Job.create({
           title,
           description,
-          skills,
+          requiredSkills,
           experienceLevel,
           location,
+          company: req.user.business,
           recruiter: recruiterId,
         });
 

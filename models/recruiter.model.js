@@ -53,13 +53,13 @@ const recruiterSchema = new mongoose.Schema({
     },
 
     // Password field
-    // password: {
-    //     type: String,
-    //     required: true,
-    //     trim: true,
-    //     minlength: 8,
-    //     select: false,
-    // },
+    password: {
+        type: String,
+        required: true,
+        trim: true,
+        minlength: 8,
+        select: false,
+    },
 
     // Role field
     role: {
@@ -83,18 +83,18 @@ const recruiterSchema = new mongoose.Schema({
 },
 {timestamps: true,});
 
-// // Hash password before saving
-// recruiterSchema.pre("save", async function () {
-//   if (!this.isModified("password")) return;
+// Hash password before saving
+recruiterSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
 
-//   const salt = await bcryptjs.genSalt(10);
-//   this.password = await bcryptjs.hash(this.password, salt);
-// });
+  const salt = await bcryptjs.genSalt(10);
+  this.password = await bcryptjs.hash(this.password, salt);
+});
 
-// // Compare password method
-// recruiterSchema.methods.comparePassword = async function (enteredPassword) {
-//   return await bcryptjs.compare(enteredPassword, this.password);
-// };
+// Compare password method
+recruiterSchema.methods.comparePassword = async function (enteredPassword) {
+  return await bcryptjs.compare(enteredPassword, this.password);
+};
 
 // Creating Recruiter model
 const Recruiter = mongoose.model("Recruiter", recruiterSchema);

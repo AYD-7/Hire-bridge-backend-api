@@ -1,11 +1,12 @@
-import dotenv from 'dotenv';
-dotenv.config();
 // Importing modules
 import express from 'express';
 import morgan from 'morgan'; 
 import { connectDB } from './config/connectDB.js';
-import { errorHandler } from './middlewares/middlewareFile.js';
+import { errorHandler } from './middlewares/error.handler.js';
 import authRoutes from './routes/auth.routes.js';
+import jobRoutes from "./routes/job.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js";
+import { protect, authorize } from "./middlewares/auth.middleware.js";
 
 // Initializing app variable with express
 const app = express();
@@ -14,7 +15,6 @@ const PORT = process.env.PORT || 3000
 
 app.use(express.json()); // Parsing objects to the req.body
 app.use(morgan('dev')); // logger
-app.use(errorHandler); // Global error handler  
 
 // Introductory Message
 const message = `
@@ -32,8 +32,11 @@ app.get('/', (req, res) => {
     res.status(200).send(message)
 });
 
-// Auth routes
-app.use("/api/v1/auth", authRoutes);
+// routes
+app.use("/api/v1/auth", authRoutes); // auth routes
+app.use("/api/v1/jobs", protect, authorize("recruiter"), jobRoutes); // job routes
+app.use("/api/v1/dashboard", protect, authorize("recruiter"), dashboardRoutes); // dashboard routes
+app.use(errorHandler); // Global error handler  
 
 
 // Starting server
@@ -41,3 +44,4 @@ app.listen(PORT, () => {
     connectDB();
     console.log(`Server is running on ${PORT}`);
 })
+

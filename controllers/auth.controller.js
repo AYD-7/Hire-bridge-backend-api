@@ -1,69 +1,206 @@
 import Recruiter from "../models/recruiter.model.js";
+import Candidate from "../models/candidate.model.js";
 import { sendWelcomeEmail } from "../utils/emailService.js";
+import { calculateMatchScore } from "../services/matchingService.js";
+import generateToken from "../utils/generate.token.js";
+
 
 // Register a recruiter middleware/controller
 export const registerRecruiter = async (req, res, next) => {
-    try {
-        // Destructuring entries from req.body
-        const {
-            business,
-            industry,
-            phone,
-            email,
-            location,
-            address,
-            ...otherFields
-        } = req.body;
+  try {
+    // Destructuring entries from req.body
+    const {
+      business,
+      industry,
+      phone,
+      email,
+      location,
+      address,
+      ...otherFields
+    } = req.body;
 
-        // Validating required fields
-        if (!business || !industry || !phone || !email || !location || !address) {
-            return res.status(400).json({
-                success: false,
-                message: "You are missing a required field!"
-            });
-        }
-
-        // Checking if email already exists
-        const existingRecruiter = await Recruiter.findOne({ email });
-
-        if (existingRecruiter) {
-            return res.status(400).json({
-                success: false,
-                message: "Email already registered"
-            });
-        }
-
-        // Creating a new recruiter
-        const recruiter = await Recruiter.create({
-            business,
-            industry,
-            phone,
-            email,
-            location,
-            address,
-            ...otherFields,
-            lastLogin: new Date().toISOString(), 
-        });
-
-        // Sending welcome message to user's email
-        sendWelcomeEmail(recruiter.email, recruiter.business, recruiter.role);
-
-        // Sending response 
-        res.status(201).json({
-            success: true,
-            message: "Recruiter registered successfully",
-            data: {
-                business: recruiter.business,
-                industry: recruiter.industry,
-                phone: recruiter.phone,
-                email: recruiter.email,
-                location: recruiter.location,
-                address: recruiter.address,
-                role: recruiter.role,
-            }
-        });
-
-    } catch (error) {
-        next(error);
+    // Validating required fields
+    if (!business || !industry || !phone || !email || !location || !address) {
+      return res.status(400).json({
+        success: false,
+        message: "You are missing a required field!",
+      });
     }
+
+    // Checking if email already exists
+    const existingRecruiter = await Recruiter.findOne({ email });
+
+    if (existingRecruiter) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already registered",
+      });
+    }
+
+    // Creating a new recruiter
+    const recruiter = await Recruiter.create({
+      business,
+      industry,
+      phone,
+      email,
+      location,
+      address,
+      ...otherFields,
+      lastLogin: new Date().toISOString(),
+    });
+
+    // Generate token
+    const token = generateToken(recruiter._id, "recruiter");
+
+    // Sending welcome message to user's email
+    sendWelcomeEmail(recruiter.email, recruiter.business, recruiter.role);
+
+    // Sending response
+    res.status(201).json({
+      success: true,
+      message: "Recruiter registered successfully",
+      data: {
+        business: recruiter.business,
+        industry: recruiter.industry,
+        phone: recruiter.phone,
+        email: recruiter.email,
+        location: recruiter.location,
+        address: recruiter.address,
+        role: recruiter.role,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Candidate Registration
+export const registerCandidate = async (req, res, next) => {
+  try {
+    const { name, email, password, confirmPassword } = req.body;
+
+    // Validate Required Fields
+    if (!name || !email || !password || !confirmPassword) {
+      return res.status(400).json({
+        status: "error",
+        message: "You are missing a required field!",
+      });
+    }
+    // Check if Candidate Already Exist
+    const existingCandidate = await Candidate.findOne({ email });
+    if (existingCandidate) {
+      return res.status(400).json({
+        status: "error",
+        message: "Email already registered",
+      });
+    }
+    // Creating a New Candidate
+    const newCandidate = await Candidate.create({
+      name,
+      email,
+      password,
+      confirmPassword,
+    });
+
+    // Generate JWT token using the new candidate's _id
+    const token = generateToken(newCandidate._id, "candidate");
+
+    // Remove password from the response
+    newCandidate.password = undefined;
+    newCandidate.confirmPassword = undefined;
+
+    // Sending welcome message to user's email
+    sendWelcomeEmail(newCandidate.email, newCandidate.name, newCandidate.role);
+
+    // Sending Response
+    res.status(201).json({
+      status: "success",
+      message: "Candidate registered successfully",
+      token,
+      data: {
+        candidate: newCandidate,
+      },
+    });
+  } catch (error) {
+    // Mongoose validation errors
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((el) => el.message);
+      return res.status(400).json({
+        status: "error",
+        message: messages.join(". "),
+      });
+    }
+    // Handle unexpected errors
+    res.status(500).json({
+      status: "error",
+      message: "Something went wrong. Please try again later.",
+    });
+  }
+};
+
+// Recruiter and Candidate Login
+export const login = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validate required fields
+    if (!email || !password) {
+      return res.status(400).json({
+        status: "error",
+        message: "Please provide your email and password",
+      });
+    }
+
+    // Check if user is a recruiter or candidate before login
+    let user = await Candidate.findOne({ email }).select("+password");
+    let role = "candidate";
+
+    if (!user) {
+      user = await Recruiter.findOne({ email }).select("+password");
+      role = "recruiter";
+    }
+
+    // Check if candidate exists and password is correct
+    if (!user || !(await user.comparePassword(password, user.password))) {
+      return res.status(401).json({
+        status: "error",
+        message: "Incorrect email or password",
+      });
+    }
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Generate Token
+    const token = generateToken(user._id);
+
+    // Remove password from the response
+    user.password = undefined;
+
+    // Success response
+    res.status(200).json({
+      status: "success",
+      message: "Logged in successfully",
+      token,
+      data: {
+        user,
+        role,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const matchCandidateToJob = async (req, res) => {
+  const candidateSkills = ["javascript", "nodejs", "mongodb"];
+  const jobSkills = ["javascript", "nodejs", "python"];
+
+  const result = calculateMatchScore(candidateSkills, jobSkills);
+
+  res.json({
+    matchScore: result.score,
+    matchedSkills: result.matchedSkills,
+  });
 };
