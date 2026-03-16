@@ -6,6 +6,7 @@ import { errorHandler } from './middlewares/error.handler.js';
 import authRoutes from './routes/auth.routes.js';
 import jobRoutes from "./routes/job.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
+import applicationRoutes from "./routes/application.routes.js";
 import { protect, authorize } from "./middlewares/auth.middleware.js";
 import cors from 'cors';
 
@@ -39,6 +40,7 @@ app.get('/', (req, res) => {
 app.use("/api/v1/auth", authRoutes); // auth routes
 app.use("/api/v1/jobs", protect, authorize("recruiter"), jobRoutes); // job routes
 app.use("/api/v1/dashboard", protect, authorize("recruiter"), dashboardRoutes); // dashboard routes
+app.use("/api/v1", applicationRoutes);
 app.use(errorHandler); // Global error handler  
 
 
