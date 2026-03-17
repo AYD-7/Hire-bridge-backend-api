@@ -40,7 +40,7 @@ const candidateProfileSchema = new mongoose.Schema({
         },
         email: {
             type: String,
-            trim: trim,
+            trim: true,
             lowercase: true,
         },
         professionalSummary: {

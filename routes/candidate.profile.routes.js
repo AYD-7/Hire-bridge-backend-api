@@ -14,7 +14,7 @@ import {
   updateVisibility,
   updateJobPreferences,
 } from "../controllers/candidate.profile.controller.js";
-import { protect, authorize } from "../middleware/auth.middleware.js";
+import { protect, authorize } from "../middlewares/auth.middleware.js";
  
 const router = express.Router();
 
@@ -24,7 +24,7 @@ router.use(authorize("candidate")); // Only candidates can access these routes
 
 // Profile
 router.post("/", createProfile);
-router.get("/me", getMyProfile);
+router.get("/profile", getMyProfile);
 
 // Basic Info
 router.patch("/basic-info", updateBasicInfo);
