@@ -39,9 +39,9 @@ app.get('/', (req, res) => {
 
 // routes
 app.use("/api/v1/auth", authRoutes); // auth routes
-app.use("/api/v1/jobs", protect, authorize("recruiter"), jobRoutes); // job routes
-app.use("/api/v1/dashboard", protect, authorize("recruiter"), dashboardRoutes); // dashboard routes
-app.use("/api/v1/candidate/profile", protect, authorize("candidate"), candidateProfileRoutes); // candidate profile routes
+app.use("/api/v1/jobs", jobRoutes); // job routes
+app.use("/api/v1/dashboard", dashboardRoutes); // dashboard routes
+app.use("/api/v1/candidate/profile", candidateProfileRoutes); // candidate profile routes
 
 // Global Error Handler
 app.use(errorHandler); // Global error handler  
