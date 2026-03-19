@@ -31,8 +31,31 @@ const jobSchema = new mongoose.Schema(
 
     experienceLevel: {
       type: String,
-      enum: ["junior", "mid", "senior"],
+      enum: ["junior", "mid-level", "senior"],
       required: true,
+    },
+
+    // New fields
+    jobType: {
+      type: String,
+      enum: ["full-time", "part-time", "remote", "hybrid", "contract"],
+    },
+
+    department: {
+      type: String,
+    },
+
+    minimumQualifications: {
+      type: [String],
+    },
+
+    preferredQualifications: {
+      type: [String],
+    },
+
+    views: {
+      type: Number,
+      default: 0,
     },
 
     recruiter: {
