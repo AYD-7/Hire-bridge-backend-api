@@ -45,17 +45,6 @@ export const registerRecruiter = async (req, res, next) => {
     // Generate token
     const token = generateToken(recruiter._id, "recruiter");
 
-    // Send welcome email
-    try {
-      await sendWelcomeEmail(
-        recruiter.email,
-        recruiter.business,
-        recruiter.role,
-      );
-    } catch (emailError) {
-      console.error("Welcome email failed:", emailError.message);
-    }
-
     // Response
     res.status(201).json({
       success: true,
@@ -70,6 +59,18 @@ export const registerRecruiter = async (req, res, next) => {
         role: recruiter.role,
       },
     });
+
+    // Send welcome email
+    try {
+      await sendWelcomeEmail(
+        recruiter.email,
+        recruiter.business,
+        recruiter.role,
+      );
+    } catch (emailError) {
+      console.error("Welcome email failed:", emailError.message);
+    }
+
   } catch (error) {
     next(error);
   }
@@ -109,12 +110,6 @@ export const registerCandidate = async (req, res, next) => {
     // Remove password from the response
     newCandidate.password = undefined;
 
-    // Sending welcome message to user's email
-    try {
-      await sendWelcomeEmail(newCandidate.email, newCandidate.name, newCandidate.role);
-    } catch (emailError) {
-      console.error("Welcome email failed:", emailError.message);
-    }
     // Converting to object and removing sensitive data 
     const newCandidateRes = newCandidate.toObject();
     delete newCandidateRes._id;
@@ -128,6 +123,13 @@ export const registerCandidate = async (req, res, next) => {
         candidate: newCandidateRes,
       },
     });
+
+    // Sending welcome message to user's email
+    try {
+      await sendWelcomeEmail(newCandidate.email, newCandidate.name, newCandidate.role);
+    } catch (emailError) {
+      console.error("Welcome email failed:", emailError.message);
+    }
   } catch (error) {
     // Mongoose validation errors
     if (error.name === "ValidationError") {
@@ -179,8 +181,10 @@ export const login = async (req, res, next) => {
     }
 
     // Update last login
-    user.lastLogin = new Date().toISOString();
-    await user.save();
+    const Model = role === "candidate" ? Candidate : Recruiter;
+    await Model.findByIdAndUpdate(user._id, {
+      lastLogin: new Date().toISOString(),
+    });
 
     // Generate Token
     const token = generateToken(user._id, user.role);
