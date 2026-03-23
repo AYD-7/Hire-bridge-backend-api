@@ -46,7 +46,15 @@ export const registerRecruiter = async (req, res, next) => {
     const token = generateToken(recruiter._id, "recruiter");
 
     // Send welcome email
-    sendWelcomeEmail(recruiter.email, recruiter.business, recruiter.role);
+    try {
+      await sendWelcomeEmail(
+        recruiter.email,
+        recruiter.business,
+        recruiter.role,
+      );
+    } catch (emailError) {
+      console.error("Welcome email failed:", emailError.message);
+    }
 
     // Response
     res.status(201).json({
@@ -102,8 +110,11 @@ export const registerCandidate = async (req, res, next) => {
     newCandidate.password = undefined;
 
     // Sending welcome message to user's email
-    sendWelcomeEmail(newCandidate.email, newCandidate.name, newCandidate.role);
-
+    try {
+      await sendWelcomeEmail(newCandidate.email, newCandidate.name, newCandidate.role);
+    } catch (emailError) {
+      console.error("Welcome email failed:", emailError.message);
+    }
     // Converting to object and removing sensitive data 
     const newCandidateRes = newCandidate.toObject();
     delete newCandidateRes._id;
